@@ -1,0 +1,24 @@
+{
+  "name": "langa-konnect-website",
+  "version": "1.0.0",
+  "description": "Langa Konnect is a lightweight, client-side single-page app (SPA) that connects the Langa community to local businesses, organisations, and events.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sinazo04/Daily-Facts-Clothing-Website.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Sinazo04/Daily-Facts-Clothing-Website/issues"
+  },
+  "homepage": "https://github.com/Sinazo04/Daily-Facts-Clothing-Website#readme",
+  "dependencies": {
+    "stripe": "^20.1.2"
+  }
+}

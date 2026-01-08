@@ -1,0 +1,5 @@
+/* Small custom styles for Langa Konnect */
+body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+.hidden { display: none; }
+/* Make modal content scrollable on small screens */
+#bizDetailContent img { max-width: 100%; height: auto; }
