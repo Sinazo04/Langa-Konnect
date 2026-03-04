@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="Langa Konnect Logo.png" />
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-900 text-sm">
     <!-- Auth Modal -->
     <div id="authModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-md w-full p-6 relative">
@@ -190,14 +190,17 @@
                 <div class="text-xl font-bold">Langa Konnect</div>
             </div>
             <ul class="hidden md:flex gap-6 items-center">
-                <li><a href="#businesses" class="hover:text-gray-200">Businesses</a></li>
                 <li><a href="#events" class="hover:text-gray-200">Events</a></li>
                 <li><a href="#organisations" class="hover:text-gray-200">Organisations</a></li>
+                <li><a href="#businesses" class="hover:text-gray-200">Local Businesses</a></li>
+                <li><a href="#football" class="hover:text-gray-200">Football Teams</a></li>
+                <li><a href="#vendors" class="hover:text-gray-200">Local Vendors</a></li>
+                <li><a href="#community" class="hover:text-gray-200">Community Center</a></li>
             </ul>
             <div class="flex items-center gap-3">
                 <button id="addBusinessBtn" onclick="toggleAddBusiness(true)" class="hidden bg-white text-green-800 px-3 py-1 rounded">Add Business</button>
                 <button id="addEventBtn" onclick="toggleAddEvent(true)" class="hidden bg-white text-green-800 px-3 py-1 rounded">Add Event</button>
-                <button id="subscribeBtn" onclick="openSubscribeModal()" class="bg-yellow-300 text-green-800 px-3 py-1 rounded">Subscribe</button>
+                <button id="subscribeBtn" onclick="openSubscribeModal()" class="hidden bg-yellow-300 text-green-800 px-3 py-1 rounded">Subscribe</button>
                 <button id="loginBtn" onclick="toggleAuthModal(true)" class="bg-white text-green-800 px-3 py-1 rounded">Login / Register</button>
                 <button id="logoutBtn" onclick="logout()" class="hidden border border-white px-3 py-1 rounded">Logout</button>
             </div>
@@ -214,51 +217,84 @@
 
     <div class="bg-gray-100 py-4 sticky top-16 z-30">
         <div class="max-w-7xl mx-auto px-4 flex gap-4 items-center">
-            <select id="categoryFilter" class="px-4 py-2 border rounded">
-                <option value="">All Categories</option>
-                <option value="welding">Welding</option>
-                <option value="hair-salon">Hair Salon</option>
-                <option value="tshisanyama">Tshisanyama</option>
-                <option value="phone-repair">Phone Repair</option>
-                <option value="other">Other</option>
-            </select>
             <input id="searchInput" placeholder="Search businesses or location" class="px-4 py-2 border rounded flex-1" />
             <div class="text-sm text-gray-700">Logged in as: <span id="currentUserName">Guest</span></div>
         </div>
     </div>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <section id="businesses" class="mb-12">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Businesses</h2>
-                <button onclick="toggleAddBusiness(true)" class="md:hidden bg-green-700 text-white px-3 py-1 rounded">Add Business</button>
-            </div>
-            <div id="businessGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <section id="about" class="mb-12 bg-white p-6 rounded shadow">
+            <h2 class="text-2xl font-bold mb-3">About Langa Konnect</h2>
+            <p class="text-gray-700">Langa Konnect is a community-driven directory and events hub built to connect residents, small businesses, organisations and volunteers across Langa. Our goal is to make it simple to discover local services, join events, support small vendors, and promote community-led initiatives. Anyone from the township can add a business, list an event, or share a local resource — we encourage respectful, accurate listings that help the whole community thrive.</p>
         </section>
 
-        <section id="myBusinesses" class="mb-12 hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">My Businesses</h2>
+        <section id="home-options" class="mb-12">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold">Explore Langa</h2>
+                <p class="text-gray-700 mt-2">Choose a category to discover local organisations, events, vendors and community resources.</p>
             </div>
-            <div id="myBusinessGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <a href="#events" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
+                    <h3 class="text-xl font-semibold">Events</h3>
+                    <p class="text-sm text-gray-600 mt-2">Find upcoming community events and gatherings.</p>
+                </a>
+                <a href="#organisations" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
+                    <h3 class="text-xl font-semibold">Organisations</h3>
+                    <p class="text-sm text-gray-600 mt-2">Local NGOs and community groups (e.g., Just Grace NPC).</p>
+                </a>
+                <a href="#businesses" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
+                    <h3 class="text-xl font-semibold">Local Businesses</h3>
+                    <p class="text-sm text-gray-600 mt-2">Shops, services and small enterprises in Langa.</p>
+                </a>
+                <a href="#football" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
+                    <h3 class="text-xl font-semibold">Football Teams</h3>
+                    <p class="text-sm text-gray-600 mt-2">Local neighbourhood teams and match schedules.</p>
+                </a>
+                <a href="#vendors" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
+                    <h3 class="text-xl font-semibold">Local Vendors</h3>
+                    <p class="text-sm text-gray-600 mt-2">Street vendors, market stalls and food sellers.</p>
+                </a>
+                <a href="#community" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
+                    <h3 class="text-xl font-semibold">Community Center</h3>
+                    <p class="text-sm text-gray-600 mt-2">Local centres offering services and activities.</p>
+                </a>
+            </div>
         </section>
 
-        <section id="events" class="mb-12">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Events</h2>
-                <button onclick="toggleAddEvent(true)" class="bg-blue-600 text-white px-3 py-1 rounded">Create Event</button>
+        <section id="contact" class="mb-12 bg-white p-6 rounded shadow">
+            <h2 class="text-2xl font-bold mb-3">Contact the Langa Konnect Team</h2>
+            <p class="text-gray-700 mb-4">Have feedback, partnership ideas, or need help getting listed? Reach out to the Langa Konnect creators — we'd love to hear from you.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="font-semibold">Email</p>
+                    <p><a class="text-green-700" href="mailto:hello@langakonnect.org">hello@langakonnect.org</a></p>
+                </div>
+                <div>
+                    <p class="font-semibold">Phone / WhatsApp</p>
+                    <p class="text-gray-700">+27 72 000 0000</p>
+                </div>
             </div>
-            <div id="eventsList" class="space-y-4"></div>
+            <div class="mt-6">
+                <form id="contactForm" onsubmit="event.preventDefault(); alert('Thanks — this is a demo contact form. Email us at hello@langakonnect.org');">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input required placeholder="Your name" class="border rounded px-3 py-2" />
+                        <input required type="email" placeholder="Your email" class="border rounded px-3 py-2" />
+                    </div>
+                    <textarea required placeholder="Message" class="w-full border rounded px-3 py-2 mt-3" rows="4"></textarea>
+                    <div class="text-right mt-3">
+                        <button class="bg-green-700 text-white px-4 py-2 rounded">Send Message</button>
+                    </div>
+                </form>
+            </div>
         </section>
 
-        <section id="organisations">
-            <h2 class="text-2xl font-bold mb-4">Organisations</h2>
-            <div class="bg-white p-6 rounded shadow">
-                <h3 class="text-xl font-bold">Just Grace NPC</h3>
-                <p class="text-gray-700 mt-2">Just Grace NPC supports families and youth with food relief, skills training and community upliftment programmes in Langa. They host community events, mentorships and provide direct support to vulnerable residents.</p>
-                <div id="orgReviews" class="mt-4"></div>
-            </div>
-        </section>
+        <!-- Placeholder sections for category anchors (content still managed elsewhere) -->
+        <section id="events" class="hidden"></section>
+        <section id="organisations" class="hidden"></section>
+        <section id="businesses" class="hidden"></section>
+        <section id="football" class="hidden"></section>
+        <section id="vendors" class="hidden"></section>
+        <section id="community" class="hidden"></section>
     </main>
 
     <footer class="bg-gray-800 text-white py-6 mt-12">
