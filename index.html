@@ -53,13 +53,19 @@
                     </div>
                     <div>
                         <label class="block mb-1 font-semibold">Category</label>
-                        <select id="bizCategory" required class="w-full border rounded px-3 py-2">
-                            <option value="welding">Welding</option>
-                            <option value="hair-salon">Hair Salon</option>
-                            <option value="tshisanyama">Tshisanyama</option>
-                            <option value="phone-repair">Phone Repair</option>
-                            <option value="other">Other</option>
-                        </select>
+                <select id="bizCategory" required class="w-full border rounded px-3 py-2">
+                    <option value="">Select a category</option>
+                    <option value="welding">Welding</option>
+                    <option value="hair-salon">Hair Salon</option>
+                    <option value="tshisanyama">Tshisanyama</option>
+                    <option value="phone-repair">Phone Repair</option>
+                    <option value="local-business">Local Business</option>
+                    <option value="vendor">Local Vendor</option>
+                    <option value="sports">Sports Facility</option>
+                    <option value="organisation">Organisation</option>
+                    <option value="community-centre">Community Centre</option>
+                    <option value="other">Other</option>
+                </select>
                     </div>
                     <div class="md:col-span-2">
                         <label class="block mb-1 font-semibold">Description</label>
@@ -111,7 +117,14 @@
             </form>
         </div>
     </div>
-
+    <!-- Photo Gallery Modal -->
+    <div id=\"photoModal\" class=\"hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4\">
+        <div class=\"bg-white rounded-lg max-w-2xl w-full p-4 relative\">
+            <button onclick=\"togglePhotoModal(false)\" class=\"absolute top-2 right-4 text-2xl text-gray-700\">✕</button>
+            <img id=\"modalImage\" alt=\"photo\" class=\"w-full h-auto object-cover rounded\" />
+            <p id=\"modalCaption\" class=\"mt-3 text-center font-semibold text-gray-700\"></p>
+        </div>
+    </div>
     <!-- Business Detail Modal (reviews) -->
     <div id="bizDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-2xl w-full p-6 relative overflow-y-auto max-h-[90vh]">
@@ -193,7 +206,7 @@
                 <li><a href="#events" class="hover:text-gray-200">Events</a></li>
                 <li><a href="#organisations" class="hover:text-gray-200">Organisations</a></li>
                 <li><a href="#businesses" class="hover:text-gray-200">Local Businesses</a></li>
-                <li><a href="#football" class="hover:text-gray-200">Football Teams</a></li>
+                <li><a href=\"#sports\" class=\"hover:text-gray-200\">Sports</a></li>
                 <li><a href="#vendors" class="hover:text-gray-200">Local Vendors</a></li>
                 <li><a href="#community" class="hover:text-gray-200">Community Center</a></li>
             </ul>
@@ -215,86 +228,162 @@
         </div>
     </header>
 
-    <div class="bg-gray-100 py-4 sticky top-16 z-30">
+    <div id="searchBar" class="bg-gray-100 py-4 sticky top-16 z-30 hidden">
         <div class="max-w-7xl mx-auto px-4 flex gap-4 items-center">
-            <input id="searchInput" placeholder="Search businesses or location" class="px-4 py-2 border rounded flex-1" />
             <div class="text-sm text-gray-700">Logged in as: <span id="currentUserName">Guest</span></div>
         </div>
     </div>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <section id="about" class="mb-12 bg-white p-6 rounded shadow">
-            <h2 class="text-2xl font-bold mb-3">About Langa Konnect</h2>
-            <p class="text-gray-700">Langa Konnect is a community-driven directory and events hub built to connect residents, small businesses, organisations and volunteers across Langa. Our goal is to make it simple to discover local services, join events, support small vendors, and promote community-led initiatives. Anyone from the township can add a business, list an event, or share a local resource — we encourage respectful, accurate listings that help the whole community thrive.</p>
-        </section>
+        <!-- HOME VIEW -->
+        <div id="homeView" class="view">
+            <section id="about" class="mb-12 bg-white p-6 rounded shadow">
+                <h2 class="text-2xl font-bold mb-3">About Langa Konnect</h2>
+                <p class="text-gray-700">Langa Konnect is a community-driven directory and events hub built to connect residents, small businesses, organisations and volunteers across Langa. Our goal is to make it simple to discover local services, join events, support small vendors, and promote community-led initiatives. Anyone from the township can add a business, list an event, or share a local resource — we encourage respectful, accurate listings that help the whole community thrive.</p>
+            </section>
 
-        <section id="home-options" class="mb-12">
-            <div class="text-center mb-6">
-                <h2 class="text-3xl font-bold">Explore Langa</h2>
-                <p class="text-gray-700 mt-2">Choose a category to discover local organisations, events, vendors and community resources.</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                <a href="#events" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
-                    <h3 class="text-xl font-semibold">Events</h3>
-                    <p class="text-sm text-gray-600 mt-2">Find upcoming community events and gatherings.</p>
-                </a>
-                <a href="#organisations" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
-                    <h3 class="text-xl font-semibold">Organisations</h3>
-                    <p class="text-sm text-gray-600 mt-2">Local NGOs and community groups (e.g., Just Grace NPC).</p>
-                </a>
-                <a href="#businesses" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
-                    <h3 class="text-xl font-semibold">Local Businesses</h3>
-                    <p class="text-sm text-gray-600 mt-2">Shops, services and small enterprises in Langa.</p>
-                </a>
-                <a href="#football" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
-                    <h3 class="text-xl font-semibold">Football Teams</h3>
-                    <p class="text-sm text-gray-600 mt-2">Local neighbourhood teams and match schedules.</p>
-                </a>
-                <a href="#vendors" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
-                    <h3 class="text-xl font-semibold">Local Vendors</h3>
-                    <p class="text-sm text-gray-600 mt-2">Street vendors, market stalls and food sellers.</p>
-                </a>
-                <a href="#community" class="block bg-white p-6 rounded-lg shadow hover:shadow-md text-center">
-                    <h3 class="text-xl font-semibold">Community Center</h3>
-                    <p class="text-sm text-gray-600 mt-2">Local centres offering services and activities.</p>
-                </a>
-            </div>
-        </section>
-
-        <section id="contact" class="mb-12 bg-white p-6 rounded shadow">
-            <h2 class="text-2xl font-bold mb-3">Contact the Langa Konnect Team</h2>
-            <p class="text-gray-700 mb-4">Have feedback, partnership ideas, or need help getting listed? Reach out to the Langa Konnect creators — we'd love to hear from you.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <p class="font-semibold">Email</p>
-                    <p><a class="text-green-700" href="mailto:hello@langakonnect.org">hello@langakonnect.org</a></p>
+            <section id="home-options" class="mb-12">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl font-bold">Explore Langa</h2>
+                    <p class="text-gray-700 mt-2">Choose a category to discover local organisations, events, vendors and community resources.</p>
                 </div>
-                <div>
-                    <p class="font-semibold">Phone / WhatsApp</p>
-                    <p class="text-gray-700">+27 72 000 0000</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <button onclick="showView('eventsView')" class="w-full bg-white p-6 rounded-lg shadow hover:shadow-md active:shadow-lg hover:bg-gray-50 active:bg-gray-100 text-center cursor-pointer transition-all">
+                        <h3 class="text-xl font-semibold">Events</h3>
+                        <p class="text-sm text-gray-600 mt-2">Find upcoming community events and gatherings.</p>
+                    </button>
+                    <button onclick="showView('organisationsView')" class="w-full bg-white p-6 rounded-lg shadow hover:shadow-md active:shadow-lg hover:bg-gray-50 active:bg-gray-100 text-center cursor-pointer transition-all">
+                        <h3 class="text-xl font-semibold">Organisations</h3>
+                        <p class="text-sm text-gray-600 mt-2">Local NGOs and community groups (e.g., Just Grace NPC).</p>
+                    </button>
+                    <button onclick="showView('businessesView')" class="w-full bg-white p-6 rounded-lg shadow hover:shadow-md active:shadow-lg hover:bg-gray-50 active:bg-gray-100 text-center cursor-pointer transition-all">
+                        <h3 class="text-xl font-semibold">Local Businesses</h3>
+                        <p class="text-sm text-gray-600 mt-2">Shops, services and small enterprises in Langa.</p>
+                    </button>
+                    <button onclick="showView('sportsView')" class="w-full bg-white p-6 rounded-lg shadow hover:shadow-md active:shadow-lg hover:bg-gray-50 active:bg-gray-100 text-center cursor-pointer transition-all">
+                        <h3 class="text-xl font-semibold">Sports Facilities</h3>
+                        <p class="text-sm text-gray-600 mt-2">Gyms, pools, stadiums and upcoming matches.</p>
+                    </button>
+                    <button onclick="showView('vendorsView')" class="w-full bg-white p-6 rounded-lg shadow hover:shadow-md active:shadow-lg hover:bg-gray-50 active:bg-gray-100 text-center cursor-pointer transition-all">
+                        <h3 class="text-xl font-semibold">Local Vendors</h3>
+                        <p class="text-sm text-gray-600 mt-2">Street vendors, market stalls and food sellers.</p>
+                    </button>
+                    <button onclick="showView('communityView')" class="w-full bg-white p-6 rounded-lg shadow hover:shadow-md active:shadow-lg hover:bg-gray-50 active:bg-gray-100 text-center cursor-pointer transition-all">
+                        <h3 class="text-xl font-semibold">Community Center</h3>
+                        <p class="text-sm text-gray-600 mt-2">Local centres offering services and activities.</p>
+                    </button>
                 </div>
-            </div>
-            <div class="mt-6">
-                <form id="contactForm" onsubmit="event.preventDefault(); alert('Thanks — this is a demo contact form. Email us at hello@langakonnect.org');">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input required placeholder="Your name" class="border rounded px-3 py-2" />
-                        <input required type="email" placeholder="Your email" class="border rounded px-3 py-2" />
-                    </div>
-                    <textarea required placeholder="Message" class="w-full border rounded px-3 py-2 mt-3" rows="4"></textarea>
-                    <div class="text-right mt-3">
-                        <button class="bg-green-700 text-white px-4 py-2 rounded">Send Message</button>
-                    </div>
-                </form>
-            </div>
-        </section>
+            </section>
 
-        <!-- Placeholder sections for category anchors (content still managed elsewhere) -->
-        <section id="events" class="hidden"></section>
-        <section id="organisations" class="hidden"></section>
-        <section id="businesses" class="hidden"></section>
-        <section id="football" class="hidden"></section>
-        <section id="vendors" class="hidden"></section>
-        <section id="community" class="hidden"></section>
+            <section id="contact" class="mb-12 bg-white p-6 rounded shadow">
+                <h2 class="text-2xl font-bold mb-3">Contact the Langa Konnect Team</h2>
+                <p class="text-gray-700 mb-4">Have feedback, partnership ideas, or need help getting listed? Reach out to the Langa Konnect creators — we'd love to hear from you.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="font-semibold">Email</p>
+                        <p><a class="text-green-700" href="mailto:hello@langakonnect.org">hello@langakonnect.org</a></p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Phone / WhatsApp</p>
+                        <p class="text-gray-700">081 629 9034</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <form id="contactForm" onsubmit="event.preventDefault(); alert('Thanks — this is a demo contact form. Email us at hello@langakonnect.org');">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input required placeholder="Your name" class="border rounded px-3 py-2" />
+                            <input required type="email" placeholder="Your email" class="border rounded px-3 py-2" />
+                        </div>
+                        <textarea required placeholder="Message" class="w-full border rounded px-3 py-2 mt-3" rows="4"></textarea>
+                        <div class="text-right mt-3">
+                            <button class="bg-green-700 text-white px-4 py-2 rounded">Send Message</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
+
+        <!-- EVENTS VIEW -->
+        <div id="eventsView" class="view hidden">
+            <div class="mb-4 flex items-center gap-4">
+                <button onclick="showView('homeView')" class="bg-gray-600 text-white px-4 py-2 rounded">← Back to Home</button>
+                <h1 class="text-3xl font-bold">Upcoming Events</h1>
+            </div>
+            <div id="eventsList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </div>
+
+        <!-- ORGANISATIONS VIEW -->
+        <div id="organisationsView" class="view hidden">
+            <div class="mb-4 flex items-center gap-4">
+                <button onclick="showView('homeView')" class="bg-gray-600 text-white px-4 py-2 rounded">← Back to Home</button>
+                <h1 class="text-3xl font-bold">Local Organisations</h1>
+            </div>
+            <div class="mb-6">
+                <input id="searchOrganisations" placeholder="Search organisations..." class="px-4 py-2 border rounded w-full" />
+            </div>
+            <div id="organisationsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- BUSINESSES VIEW -->
+        <div id="businessesView" class="view hidden">
+            <div class="mb-4 flex items-center gap-4">
+                <button onclick="showView('homeView')" class="bg-gray-600 text-white px-4 py-2 rounded">← Back to Home</button>
+                <h1 class="text-3xl font-bold">Local Businesses</h1>
+            </div>
+            <div class="mb-6 flex gap-3 items-center flex-wrap">
+                <select id="categoryFilter" class="px-4 py-2 border rounded">
+                    <option value="">All Businesses</option>
+                    <option value="welding">Welding</option>
+                    <option value="hair-salon">Hair Salon</option>
+                    <option value="tshisanyama">Tshisanyama</option>
+                    <option value="phone-repair">Phone Repair</option>
+                    <option value="local-business">Local Business</option>
+                    <option value="other">Other</option>
+                </select>
+                <input id="searchBusinesses" placeholder="Search businesses..." class="px-4 py-2 border rounded flex-1" />
+            </div>
+            <div id="businessGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <section id="myBusinesses" class="hidden mt-12 p-6 bg-white rounded shadow">
+                <h3 class="text-2xl font-bold mb-4">My Businesses</h3>
+                <div id="myBusinessGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </section>
+        </div>
+
+        <!-- SPORTS VIEW -->
+        <div id="sportsView" class="view hidden">
+            <div class="mb-4 flex items-center gap-4">
+                <button onclick="showView('homeView')" class="bg-gray-600 text-white px-4 py-2 rounded">← Back to Home</button>
+                <h1 class="text-3xl font-bold">Sports Facilities & Events</h1>
+            </div>
+            <div id="sportsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- FOOTBALL VIEW -->
+        <div id="footballView" class="view hidden">
+            <div class="mb-4 flex items-center gap-4">
+                <button onclick="showView('homeView')" class="bg-gray-600 text-white px-4 py-2 rounded">← Back to Home</button>
+                <h1 class="text-3xl font-bold">Football Teams</h1>
+            </div>
+            <div id="footballGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- VENDORS VIEW -->
+        <div id="vendorsView" class="view hidden">
+            <div class="mb-4 flex items-center gap-4">
+                <button onclick="showView('homeView')" class="bg-gray-600 text-white px-4 py-2 rounded">← Back to Home</button>
+                <h1 class="text-3xl font-bold">Local Vendors</h1>
+            </div>
+            <div id="vendorGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- COMMUNITY VIEW -->
+        <div id="communityView" class="view hidden">
+            <div class="mb-4 flex items-center gap-4">
+                <button onclick="showView('homeView')" class="bg-gray-600 text-white px-4 py-2 rounded">← Back to Home</button>
+                <h1 class="text-3xl font-bold">Community Center</h1>
+            </div>
+            <div id="communityGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
     </main>
 
     <footer class="bg-gray-800 text-white py-6 mt-12">
@@ -302,6 +391,22 @@
     </footer>
 
     <script src="app.js"></script>
+    <script>
+      // Force add new businesses if they don't exist
+      document.addEventListener('DOMContentLoaded', function() {
+        const stored = localStorage.getItem('lk_businesses');
+        if (stored) {
+          const biz = JSON.parse(stored);
+          // Check if new businesses exist
+          if (!biz.some(b => b.name === 'Exquisite Hair by Zim')) {
+            // Clear old data to force reseed
+            localStorage.removeItem('lk_businesses');
+            localStorage.removeItem('lk_events');
+            location.reload();
+          }
+        }
+      });
+    </script>
     <!-- Optional Supabase client (only active if you add SUPABASE_URL and SUPABASE_ANON_KEY globals) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
     <script src="src/supabase-client.js"></script>

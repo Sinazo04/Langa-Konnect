@@ -34,6 +34,24 @@
   function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
   function uid(prefix='id') { return prefix + '_' + Math.random().toString(36).slice(2,9); }
 
+  // View management
+  window.showView = (viewId) => {
+    const views = document.querySelectorAll('.view');
+    views.forEach(view => view.classList.add('hidden'));
+    const targetView = id(viewId);
+    if (targetView) {
+      targetView.classList.remove('hidden');
+      // Trigger render functions based on view
+      if (viewId === 'eventsView') renderEvents();
+      else if (viewId === 'organisationsView') renderOrganisations();
+      else if (viewId === 'businessesView') renderBusinessGrid();
+      else if (viewId === 'sportsView') renderSports();
+      else if (viewId === 'footballView') renderFootball();
+      else if (viewId === 'vendorsView') renderVendors();
+      else if (viewId === 'communityView') renderCommunity();
+    }
+  }
+
   // Auth
   window.toggleAuthModal = (show = true) => { authModal.classList.toggle('hidden', !show); }
   window.switchAuthMode = () => {
@@ -100,6 +118,20 @@
       id('addEventBtn').classList.add('hidden');
       id('mobileAddBusinessBtn')?.classList?.add('hidden');
     }
+  }
+
+  // Photo gallery modal
+  window.togglePhotoModal = (show = true) => { id('photoModal').classList.toggle('hidden', !show); }
+  window.openPhotoGallery = (bizId) => {
+    const biz = businesses.find(b => b.id === bizId);
+    if (!biz || !biz.image) return alert('No photo available for this location');
+    const modal = id('photoModal');
+    const modalImage = id('modalImage');
+    const modalCaption = id('modalCaption');
+    modalImage.src = biz.image;
+    modalImage.alt = biz.name;
+    modalCaption.textContent = biz.name;
+    togglePhotoModal(true);
   }
 
   // Subscribe modal controls
@@ -172,7 +204,6 @@
       });
       const data = await resp.json();
       if (resp.ok && data.url) {
-        // redirect to Stripe Checkout
         window.location = data.url;
       } else {
         console.error('Checkout error', data);
@@ -314,11 +345,9 @@
     if (!biz) return alert('Business not found');
     const review = { name: currentUser.name, email: currentUser.email, rating, comment, date: Date.now() };
     biz.reviews.unshift(review);
-    // If organisation, store under businesses array too
     const idx = businesses.findIndex(b => b.id === biz.id);
     if (idx >= 0) businesses[idx] = biz;
     saveJSON(BIZ_KEY, businesses);
-    // refresh UI
     openBizDetail(biz.id);
     if (biz.id === ORG_ID) renderOrgReviews();
   }
@@ -346,11 +375,11 @@
     return false;
   }
 
-  // Renderers
   function renderBusinessGrid() {
     const grid = id('businessGrid');
-    const category = id('categoryFilter').value;
-    const query = id('searchInput').value.trim().toLowerCase();
+    if (!grid) return;
+    const category = id('categoryFilter')?.value || '';
+    const query = id('searchBusinesses')?.value.trim().toLowerCase() || '';
     let list = businesses.slice();
     if (category) list = list.filter(b => b.category === category);
     if (query) list = list.filter(b => (b.name + ' ' + (b.location||'') + ' ' + (b.description||'')).toLowerCase().includes(query));
@@ -366,7 +395,7 @@
             <div class="text-xs text-gray-600">${b.reviews.length} reviews</div>
           </div>
         </div>
-        ${b.image ? `<img src="${b.image}" alt="${escapeHtml(b.name)}" class="mt-3 max-h-40 w-full object-cover rounded"/>` : ''}
+        ${b.image ? `<img src="${b.image}" alt="${escapeHtml(b.name)}" class="mt-3 max-h-40 w-full object-cover rounded cursor-pointer hover:opacity-80" onclick="openPhotoGallery('${b.id}')"/>` : ''}
         <p class="mt-3 text-gray-700">${escapeHtml(b.description || '')}</p>
         <div class="mt-4 flex gap-2">
           <button onclick="openBizDetail('${b.id}')" class="px-3 py-1 bg-green-700 text-white rounded">View</button>
@@ -377,10 +406,10 @@
     `).join('');
   }
 
-  // My businesses
   function renderMyBusinesses() {
     const section = id('myBusinesses');
     const grid = id('myBusinessGrid');
+    if (!section || !grid) return;
     if (!currentUser) { section.classList.add('hidden'); return; }
     const mine = businesses.filter(b => b.owner === currentUser.email);
     section.classList.remove('hidden');
@@ -419,102 +448,254 @@
   }
 
   window.deleteBusiness = (bizId) => {
+    if (!currentUser) { toggleAuthModal(true); return; }
     const biz = businesses.find(b => b.id === bizId);
-    const email = id('authEmail').value.trim().toLowerCase();
-    const pass = id('authPassword').value;
-    const title = id('authTitle').textContent;
-    // If Supabase configured, use it
-    if (window.SupabaseClient && window.SupabaseClient.isEnabled) {
-      if (title === 'Register') {
-        const name = id('authName').value.trim();
-        if (!name) return alert('Please enter your name');
-        return window.SupabaseClient.signUp(email, pass, { full_name: name }).then(res => {
-          if (res.error) return alert('Registration error: ' + res.error.message);
-          alert('Registration successful! Check your email to confirm (if enabled). You can log in now.');
-          switchAuthMode();
-        }).catch(err => alert('Registration failed: ' + err.message));
-      } else {
-        return window.SupabaseClient.signIn(email, pass).then(res => {
-          if (res.error) return alert('Login error: ' + res.error.message);
-          // Try to read user info from response
-          const returnedUser = (res.user || res.data || {}).user || res.user || res.data;
-          currentUser = { email, name: (returnedUser?.user_metadata?.full_name || returnedUser?.email || email) };
-          saveJSON(CURRENT_KEY, currentUser);
-          toggleAuthModal(false);
-          updateAuthUI();
-          alert('Welcome, ' + currentUser.name);
-        }).catch(err => alert('Login failed: ' + err.message));
-      }
+    if (!biz) return alert('Business not found');
+    if (biz.owner !== currentUser.email) return alert('You are not allowed to delete this business');
+    if (!confirm('Are you sure you want to delete this business?')) return;
+    const idx = businesses.findIndex(b => b.id === bizId);
+    if (idx >= 0) {
+      businesses.splice(idx, 1);
+      saveJSON(BIZ_KEY, businesses);
+      renderBusinessGrid();
+      renderMyBusinesses();
+      alert('Business deleted');
     }
+  }
 
-    // Fallback to localStorage demo auth
-    if (title === 'Register') {
-      const name = id('authName').value.trim();
-      if (!name) return alert('Please enter your name');
-      localStorage.setItem('user_' + email, JSON.stringify({ email, password: pass, name }));
-      alert('Registration successful! Please log in.');
-      switchAuthMode();
-      return false;
-    } else {
-      const user = JSON.parse(localStorage.getItem('user_' + email) || 'null');
-      if (!user || user.password !== pass) {
-        alert('Invalid email or password.');
-        return false;
-      }
-      currentUser = user;
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      toggleAuthModal(false);
-      updateAuthUI();
-      alert('Welcome, ' + user.name + '!');
-      return false;
+  window.copyContact = (contact) => {
+    if (!contact) return alert('No contact information available');
+    navigator.clipboard.writeText(contact).then(() => {
+      alert('Contact copied: ' + contact);
+    }).catch(() => {
+      alert('Contact: ' + contact);
+    });
+  }
+
+  function renderEvents() {
+    const container = id('eventsList');
+    if (!container) return;
+    const list = events.slice().reverse();
+    container.innerHTML = list.map(e => `
+      <div class="bg-white p-4 rounded shadow">
+        <h3 class="font-bold text-lg">${escapeHtml(e.title)}</h3>
+        <div class="text-sm text-gray-600 mt-2">${new Date(e.date).toLocaleString()}</div>
+        <p class="mt-3 text-gray-700">${escapeHtml(e.desc || '')}</p>
+      </div>
+    `).join('');
+  }
+
+  function renderOrganisations() {
+    const container = id('organisationsList');
+    if (!container) return;
+    const searchTerm = id('searchOrganisations')?.value?.toLowerCase() || '';
+    const orgs = businesses.filter(b => b.category === 'organisation');
+    const filtered = orgs.filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm) || (b.description || '').toLowerCase().includes(searchTerm));
+    
+    container.innerHTML = filtered.map(b => {
+      const avgRating = b.reviews?.length ? (b.reviews.reduce((sum, r) => sum + r.rating, 0) / b.reviews.length).toFixed(1) : 'N/A';
+      return `
+        <div class="bg-white p-4 rounded shadow">
+          ${b.image ? `<img src="${b.image}" alt="${escapeHtml(b.name)}" class="w-full h-40 object-cover rounded mb-3 cursor-pointer hover:opacity-80" onclick="openPhotoGallery('${b.id}')">` : '<div class="w-full h-40 bg-gray-200 rounded mb-3 flex items-center justify-center">No photo</div>'}
+          <h3 class="font-bold text-lg">${escapeHtml(b.name)}</h3>
+          <p class="text-sm text-gray-600">${escapeHtml(b.category)}</p>
+          <p class="mt-2 text-sm text-gray-700">${escapeHtml(b.description || '')}</p>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-yellow-500 text-sm">Rating: ${avgRating} ${b.reviews?.length ? `(${b.reviews.length})` : ''}</span>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button onclick="openBizDetail('${b.id}')" class="flex-1 bg-green-700 text-white px-3 py-2 rounded text-sm">Details & Reviews</button>
+            <button onclick="copyContact('${escapeHtml(b.contact)}')" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm">Contact</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderSports() {
+    const container = id('sportsGrid');
+    if (!container) return;
+    const sports = businesses.filter(b => b.category === 'sports');
+    container.innerHTML = sports.map(b => {
+      const avgRating = b.reviews?.length ? (b.reviews.reduce((sum, r) => sum + r.rating, 0) / b.reviews.length).toFixed(1) : 'N/A';
+      return `
+        <div class="bg-white p-4 rounded shadow">
+          ${b.image ? `<img src="${b.image}" alt="${escapeHtml(b.name)}" class="w-full h-40 object-cover rounded mb-3 cursor-pointer hover:opacity-80" onclick="openPhotoGallery('${b.id}')">` : '<div class="w-full h-40 bg-gray-200 rounded mb-3 flex items-center justify-center">No photo</div>'}
+          <h3 class="font-bold text-lg">${escapeHtml(b.name)}</h3>
+          <p class="text-sm text-gray-600">${escapeHtml(b.category)}</p>
+          <p class="mt-2 text-sm text-gray-700">${escapeHtml(b.description || '')}</p>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-yellow-500 text-sm">Rating: ${avgRating}</span>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button onclick="openBizDetail('${b.id}')" class="flex-1 bg-green-700 text-white px-3 py-2 rounded text-sm">Details</button>
+            <button onclick="copyContact('${escapeHtml(b.contact)}')" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm">Contact</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderFootball() {
+    const container = id('footballGrid');
+    if (!container) return;
+    const footballTeams = businesses.filter(b => b.category === 'other' && b.name.includes('Football'));
+    container.innerHTML = footballTeams.map(b => {
+      const avgRating = b.reviews?.length ? (b.reviews.reduce((sum, r) => sum + r.rating, 0) / b.reviews.length).toFixed(1) : 'N/A';
+      return `
+        <div class="bg-white p-4 rounded shadow">
+          ${b.image ? `<img src="${b.image}" alt="${escapeHtml(b.name)}" class="w-full h-40 object-cover rounded mb-3 cursor-pointer hover:opacity-80" onclick="openPhotoGallery('${b.id}')">` : '<div class="w-full h-40 bg-gray-200 rounded mb-3 flex items-center justify-center">No photo</div>'}
+          <h3 class="font-bold text-lg">${escapeHtml(b.name)}</h3>
+          <p class="mt-2 text-sm text-gray-700">${escapeHtml(b.description || '')}</p>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-yellow-500 text-sm">Rating: ${avgRating}</span>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button onclick="openBizDetail('${b.id}')" class="flex-1 bg-green-700 text-white px-3 py-2 rounded text-sm">Details</button>
+            <button onclick="copyContact('${escapeHtml(b.contact)}')" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm">Contact</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderVendors() {
+    const container = id('vendorGrid');
+    if (!container) return;
+    const vendors = businesses.filter(b => b.category === 'vendor');
+    container.innerHTML = vendors.map(b => {
+      const avgRating = b.reviews?.length ? (b.reviews.reduce((sum, r) => sum + r.rating, 0) / b.reviews.length).toFixed(1) : 'N/A';
+      return `
+        <div class="bg-white p-4 rounded shadow">
+          ${b.image ? `<img src="${b.image}" alt="${escapeHtml(b.name)}" class="w-full h-40 object-cover rounded mb-3 cursor-pointer hover:opacity-80" onclick="openPhotoGallery('${b.id}')">` : '<div class="w-full h-40 bg-gray-200 rounded mb-3 flex items-center justify-center">No photo</div>'}
+          <h3 class="font-bold text-lg">${escapeHtml(b.name)}</h3>
+          <p class="text-sm text-gray-600">${escapeHtml(b.category)}</p>
+          <p class="mt-2 text-sm text-gray-700">${escapeHtml(b.description || '')}</p>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-yellow-500 text-sm">Rating: ${avgRating}</span>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button onclick="openBizDetail('${b.id}')" class="flex-1 bg-green-700 text-white px-3 py-2 rounded text-sm">Details</button>
+            <button onclick="copyContact('${escapeHtml(b.contact)}')" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm">Contact</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderCommunity() {
+    const container = id('communityGrid');
+    if (!container) return;
+    const community = businesses.filter(b => b.category === 'community-centre');
+    container.innerHTML = community.map(b => {
+      const avgRating = b.reviews?.length ? (b.reviews.reduce((sum, r) => sum + r.rating, 0) / b.reviews.length).toFixed(1) : 'N/A';
+      return `
+        <div class="bg-white p-4 rounded shadow">
+          ${b.image ? `<img src="${b.image}" alt="${escapeHtml(b.name)}" class="w-full h-40 object-cover rounded mb-3 cursor-pointer hover:opacity-80" onclick="openPhotoGallery('${b.id}')">` : '<div class="w-full h-40 bg-gray-200 rounded mb-3 flex items-center justify-center">No photo</div>'}
+          <h3 class="font-bold text-lg">${escapeHtml(b.name)}</h3>
+          <p class="text-sm text-gray-600">${escapeHtml(b.category)}</p>
+          <p class="mt-2 text-sm text-gray-700">${escapeHtml(b.description || '')}</p>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-yellow-500 text-sm">Rating: ${avgRating}</span>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button onclick="openBizDetail('${b.id}')" class="flex-1 bg-green-700 text-white px-3 py-2 rounded text-sm">Details</button>
+            <button onclick="copyContact('${escapeHtml(b.contact)}')" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm">Contact</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function ensureOrg() {
+    let org = businesses.find(b => b.id === ORG_ID);
+    if (!org) {
+      org = { id: ORG_ID, name: 'Just Grace NPC', category: 'organisation', description: 'Local NGO supporting Langa community. Provides social services and community support programs.', contact: '074-111-2222', location: 'Langa', reviews: [], image: '' };
+      businesses.unshift(org);
+      saveJSON(BIZ_KEY, businesses);
     }
+    return org;
   }
 
   function getOrganisation() { return ensureOrg(); }
 
-  // Utilities
   function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
 
-  // seed some data for demo
   function seedDemo() {
     if (businesses.length === 0) {
       businesses = [
-        { id: uid('biz'), name: 'Langa Welding Works', category: 'welding', description: 'Affordable welding and metalwork in Langa.', contact: '072-555-1111', location: 'Block A', reviews: [{ name: 'Nomvula', rating:5, comment: 'Great work!', date: Date.now()-86400000}] },
-        { id: uid('biz'), name: 'Mama P’s Hair Salon', category: 'hair-salon', description: 'Braids, weaves and styling.', contact: '073-222-3333', location: 'Main Street', reviews: [] },
-        { id: uid('biz'), name: 'Tshisanyama Langa', category: 'tshisanyama', description: 'Community food and braai.', contact: '074-444-5555', location: 'Corner Plaza', reviews: [] }
+        // Local Businesses
+        { id: uid('biz'), name: 'Exquisite Hair by Zim', category: 'hair-salon', description: 'Professional hair styling, braids, weaves and treatments. Follow us on Instagram @exquisite_hairby_zim', contact: 'Instagram: @exquisite_hairby_zim', location: 'Langa Township', reviews: [{ name: 'Amahle', rating: 5, comment: 'Best hair service in Langa, very professional!', date: Date.now()-86400000}], image: '' },
+        { id: uid('biz'), name: 'Langa Welding Works', category: 'welding', description: 'Affordable welding and metalwork in Langa.', contact: '072-555-1111', location: 'Block A', reviews: [{ name: 'Nomvula', rating: 5, comment: 'Great work!', date: Date.now()-86400000}], image: '' },
+        { id: uid('biz'), name: 'Mama Ps Hair Salon', category: 'hair-salon', description: 'Braids, weaves and styling.', contact: '073-222-3333', location: 'Main Street', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Banatella', category: 'local-business', description: 'Community restaurant and food vendor serving authentic local cuisine. Follow us @banatella_1903', contact: 'Instagram: @banatella_1903', location: 'Langa Township', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Tshisanyama Langa', category: 'tshisanyama', description: 'Community food and braai with affordable meals.', contact: '074-444-5555', location: 'Corner Plaza', reviews: [], image: '' },
+        
+        // Sports Facilities
+        { id: uid('biz'), name: 'Langa Sports Complex', category: 'sports', description: 'Full gym facility with modern equipment, personal training sessions, and fitness classes. Open Monday to Sunday.', contact: '073-567-8901', location: 'Langa Main Road', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Langa Swimming Pool', category: 'sports', description: 'Olympic-sized swimming pool with swimming lessons for all ages. Lifeguards on duty. Great for training and recreation.', contact: '073-567-8902', location: 'Langa Recreation Area', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Langa Stadium', category: 'sports', description: 'Multi-purpose stadium with rugby, football, and cricket fields. Hosts local matches and community tournaments.', contact: '073-567-8903', location: 'Langa Sports Field', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Langa Football Matches', category: 'sports', description: 'Weekly football matches every Saturday and Sunday. Local clubs and pickup games. Spectators welcome!', contact: '073-567-8904', location: 'Langa Stadium', reviews: [], image: '' },
+        
+        // Local Vendors
+        { id: uid('biz'), name: 'Smiley Place', category: 'vendor', description: 'Popular local food vendor serving delicious street food, grilled meat, and traditional dishes. Famous for smileys (sheep intestines).', contact: '074-123-4567', location: 'Main Street Market', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Cow Head Spot', category: 'vendor', description: 'Authentic vendor serving freshly prepared cow head and other traditional meat specialties. Best quality and prices in Langa.', contact: '074-234-5678', location: 'Market Area', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Chicken at the Taxi Rank', category: 'vendor', description: 'Fresh grilled chicken and take-away food. Quick service, quality meat, and great flavors. Popular lunch spot.', contact: '074-345-6789', location: 'Langa Taxi Rank', reviews: [], image: '' },
+        
+        // Organisations
+        { id: uid('biz'), name: 'Langa Police Station', category: 'organisation', description: 'South African Police Service office providing law enforcement and community safety services to the Langa area.', contact: '086-001-10177', location: 'Main Street', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Langa Museum', category: 'organisation', description: 'Community museum showcasing the history and culture of Langa township. Educational programs and cultural events.', contact: '073-456-7890', location: 'Heritage Park', reviews: [], image: '' },
+        { id: uid('biz'), name: 'DSD - Social Development', category: 'organisation', description: 'Department of Social Development office providing social welfare services, grants, and community support programs.', contact: '074-567-8901', location: 'Government Building', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Joe Slovo Community Info', category: 'organisation', description: 'Community information center providing resources, job training, and support services for Joe Slovo residents and Langa community.', contact: '073-678-9012', location: 'Joe Slovo Settlement', reviews: [], image: '' },
+        { id: uid('biz'), name: 'Just Grace NPC', category: 'organisation', description: 'Local NGO supporting Langa community with social services, skills training, youth programs and community development initiatives.', contact: '074-111-2222', location: 'Langa Township', reviews: [], image: '' },
+        
+        // Community Centre
+        { id: uid('biz'), name: 'Langa Bicycle Hub', category: 'community-centre', description: 'Bicycle shop, repairs and cycling community hub. Bicycles, accessories and cycling events. Follow us @langabicyclehub', contact: 'Instagram: @langabicyclehub', location: 'Langa Main Road', reviews: [], image: '' },
+        
+        // Football Teams
+        { id: uid('biz'), name: 'Bazi Abantu Football Club', category: 'other', description: 'Local football club promoting sports and community development in Langa. Plays every week. Welcome spectators!', contact: 'Instagram: @bazi_abantu_football_club', location: 'Langa Sports Field', reviews: [], image: '' }
       ];
       saveJSON(BIZ_KEY, businesses);
     }
     if (events.length === 0) {
-      events = [ { id: uid('ev'), title: 'Community Clean Up', date: new Date(Date.now()+86400000).toISOString(), desc: 'Join us to clean up Langa streets.', createdBy: Object.keys(users)[0] || '' } ];
+      const tomorrow = new Date(Date.now() + 86400000);
+      const nextWeek = new Date(Date.now() + 7*86400000);
+      const twoWeeks = new Date(Date.now() + 14*86400000);
+      const threeWeeks = new Date(Date.now() + 21*86400000);
+      
+      events = [ 
+        { id: uid('ev'), title: 'Bazi Abantu vs Langa United', date: tomorrow.toISOString(), desc: 'LFA Premier League match - Senior Team. 🗓️ 6 March 2026, 20:00 | 📍 Langa Football Stadium (A). Come support your favorite team!', createdBy: 'system' },
+        { id: uid('ev'), title: 'Community Clean Up Drive', date: nextWeek.toISOString(), desc: 'Join us to clean up Langa streets and local parks. All are welcome!', createdBy: 'system' },
+        { id: uid('ev'), title: 'Langa Bicycle Hub - Community Ride', date: twoWeeks.toISOString(), desc: 'Fun community bicycle ride through Langa. All skill levels welcome!', createdBy: 'system' },
+        { id: uid('ev'), title: 'Hair & Beauty Workshop', date: threeWeeks.toISOString(), desc: 'Learn hair care and styling tips with Exquisite Hair by Zim. Register now!', createdBy: 'system' }
+      ];
       saveJSON(EVENTS_KEY, events);
     }
     ensureOrg();
   }
 
-  // Filters
-  id('categoryFilter').addEventListener('change', renderBusinessGrid);
-  id('searchInput').addEventListener('input', renderBusinessGrid);
+  id('categoryFilter')?.addEventListener('change', renderBusinessGrid);
+  id('searchBusinesses')?.addEventListener('input', renderBusinessGrid);
+  id('searchOrganisations')?.addEventListener('input', renderOrganisations);
+  
+  // Setup listeners (called after DOM loads)
+  const setupSearchListeners = () => {
+    // Listeners are now set up above
+  };
 
-  // Init
   document.addEventListener('DOMContentLoaded', () => {
-    // load saved data
     users = users || {};
     currentUser = currentUser || loadJSON(CURRENT_KEY) || null;
     businesses = loadJSON(BIZ_KEY) || businesses;
     events = loadJSON(EVENTS_KEY) || events;
     seedDemo();
     updateAuthUI();
-    renderBusinessGrid();
-    renderMyBusinesses();
-    renderEvents();
-    // Render org reviews into organisations section
-    renderOrgReviews();
+    setupSearchListeners();
+    showView('homeView');
   });
 
-  // Image preview
-  id('bizImage').addEventListener('change', (e) => {
-    const f = e.target.files && e.target.files[0];
+  id('bizImage')?.addEventListener('change', (e) => {
+    const f = e.target?.files?.[0];
     if (!f) { id('bizImagePreview').classList.add('hidden'); id('bizImagePreview').src = ''; return; }
     readFileAsDataURL(f).then(d => { id('bizImagePreview').src = d; id('bizImagePreview').classList.remove('hidden'); });
   });
@@ -522,6 +703,7 @@
   function renderOrgReviews() {
     const org = getOrganisation();
     const container = id('orgReviews');
+    if (!container) return;
     if (!org.reviews || org.reviews.length === 0) {
       container.innerHTML = '<div class="text-gray-600">No reviews yet. Be the first to review Just Grace NPC.</div>';
       return;
